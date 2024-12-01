@@ -2,7 +2,7 @@ use std::{env::{self}, fs::File, io::{BufRead, BufReader}};
 fn main() {
     let input = get_input(); 
     println!("Part 1: {}", part_1(input.clone()));
-    // println!("Part 2: {}", part_2(input));
+    println!("Part 2: {}", part_2(input));
 }
 
 fn part_1(mut locations : (Vec<i32>, Vec<i32>)) -> i32 {
@@ -13,6 +13,22 @@ fn part_1(mut locations : (Vec<i32>, Vec<i32>)) -> i32 {
     
     for i in 0..= locations.0.len() - 1 {
         output += (locations.0[i] - locations.1[i]).abs();
+    }
+
+    return output;
+}
+
+fn part_2(locations : (Vec<i32>, Vec<i32>)) -> i32 {
+    let mut output = 0;
+    
+    for i in locations.0 {
+        let mut count = 0;
+        for j in locations.1.clone() {
+            if i == j {
+                count += 1;
+            }
+        }
+        output += i * count;
     }
 
     return output;
