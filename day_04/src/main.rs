@@ -19,6 +19,17 @@ fn part_1(input: &Input) -> i64 {
     let x_len = input[0].len();
 
     for y in 0..y_len - 3 {
+        for x in 0..x_len {
+            output += check_xmas(
+                input[y][x],
+                input[y + 1][x],
+                input[y + 2][x],
+                input[y + 3][x],
+            );
+        }
+    }
+
+    for y in 0..y_len {
         for x in 0..x_len - 3 {
             output += check_xmas(
                 input[y][x],
@@ -26,12 +37,11 @@ fn part_1(input: &Input) -> i64 {
                 input[y][x + 2],
                 input[y][x + 3],
             );
-            output += check_xmas(
-                input[y][x],
-                input[y + 1][x],
-                input[y + 2][x],
-                input[y + 3][x],
-            );
+        }
+    }
+
+    for y in 0..y_len - 3 {
+        for x in 0..x_len - 3 {
             output += check_xmas(
                 input[y][x],
                 input[y + 1][x + 1],
