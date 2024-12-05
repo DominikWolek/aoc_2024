@@ -19,37 +19,14 @@ fn part_1(rules: &Rules, pages: &Pages) -> i64 {
     let mut correct: Pages = Vec::new();
 
     for page in pages {
-        let mut is_correct = true;
-        for rule in rules {
-            let first = rule.0;
-            let second = rule.1;
-
-            if page.contains(&first) && page.contains(&second) {
-                let first_pos = page.iter().position(|x| x == &first);
-                let second_pos = page.iter().position(|x| x == &second);
-
-                // println!(
-                //     "{:?}, {:?}, ({:?}, {:?}), {:?}",
-                //     page,
-                //     rule,
-                //     first_pos,
-                //     second_pos,
-                //     (first_pos > second_pos)
-                // );
-                if first_pos > second_pos {
-                    is_correct = false;
-                    break;
-                }
-            }
-        }
-        if is_correct {
+        if is_correct(page, rules) {
             correct.push(page.clone());
         }
     }
+
     for page in correct {
         let middle_index = page.len() / 2;
         output += page[middle_index];
-        println!("{:?}", page);
     }
 
     return output;
@@ -57,9 +34,71 @@ fn part_1(rules: &Rules, pages: &Pages) -> i64 {
 
 fn part_2(rules: &Rules, pages: &Pages) -> i64 {
     let mut output: i64 = 0;
+    let mut incorrect: Pages = Vec::new();
 
-    // for i in input {}
+    for page in pages {
+        if !is_correct(page, rules) {
+            incorrect.push(page.clone());
+        }
+    }
 
+    let mut updated: Pages = Vec::new();
+    for page in incorrect {
+        updated.push(apply_rules(&page, rules));
+    }
+
+    let mut updated_1: Pages = Vec::new();
+    for page in updated {
+        println!("{:?}", page);
+        updated_1.push(apply_rules(&page, rules));
+    }
+
+    for page in updated_1 {
+        println!("{:?}", page);
+        let middle_index = page.len() / 2;
+        output += page[middle_index];
+    }
+
+    return output;
+}
+
+fn apply_rules(page: &Vec<i64>, rules: &Rules) -> Vec<i64> {
+    let mut output = page.clone();
+
+    for rule in rules {
+        let first = rule.0;
+        let second = rule.1;
+
+        if output.contains(&first) && output.contains(&second) {
+            let first_pos = output.iter().position(|x| *x == first).expect("") as usize;
+            let second_pos = output.iter().position(|x| *x == second).expect("") as usize;
+
+            if first_pos > second_pos {
+                output.remove(first_pos);
+                output.insert(second_pos, first);
+            }
+        }
+    }
+
+    return output;
+}
+
+fn is_correct(page: &Vec<i64>, rules: &Rules) -> bool {
+    let mut output = true;
+    for rule in rules {
+        let first = rule.0;
+        let second = rule.1;
+
+        if page.contains(&first) && page.contains(&second) {
+            let first_pos = page.iter().position(|x| x == &first);
+            let second_pos = page.iter().position(|x| x == &second);
+
+            if first_pos > second_pos {
+                output = false;
+                break;
+            }
+        }
+    }
     return output;
 }
 
