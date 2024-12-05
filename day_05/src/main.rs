@@ -15,68 +15,50 @@ fn main() {
 }
 
 fn part_1(rules: &Rules, pages: &Pages) -> i64 {
-    let mut output: i64 = 0;
-    let mut correct: Pages = Vec::new();
+    let correct = pages
+        .iter()
+        .cloned()
+        .filter(|page| is_correct(&page, rules))
+        .collect();
 
-    for page in pages {
-        if is_correct(page, rules) {
-            correct.push(page.clone());
-        }
-    }
-
-    for page in correct {
-        let middle_index = page.len() / 2;
-        output += page[middle_index];
-    }
-
-    return output;
+    return sum_middle(correct);
 }
 
 fn part_2(rules: &Rules, pages: &Pages) -> i64 {
-    let mut output: i64 = 0;
-    let mut incorrect: Pages = Vec::new();
+    let corrected = pages
+        .iter()
+        .cloned()
+        .filter(|page| !is_correct(&page, rules))
+        .map(|page| apply_rules(&page, rules))
+        .map(|page| apply_rules(&page, rules))
+        .collect();
 
-    for page in pages {
-        if !is_correct(page, rules) {
-            incorrect.push(page.clone());
-        }
-    }
-
-    let mut updated: Pages = Vec::new();
-    for page in incorrect {
-        updated.push(apply_rules(&page, rules));
-    }
-
-    let mut updated_1: Pages = Vec::new();
-    for page in updated {
-        println!("{:?}", page);
-        updated_1.push(apply_rules(&page, rules));
-    }
-
-    for page in updated_1 {
-        println!("{:?}", page);
-        let middle_index = page.len() / 2;
-        output += page[middle_index];
-    }
-
-    return output;
+    return sum_middle(corrected);
 }
 
 fn apply_rules(page: &Vec<i64>, rules: &Rules) -> Vec<i64> {
     let mut output = page.clone();
 
     for rule in rules {
-        let first = rule.0;
-        let second = rule.1;
+        output = apply_rule(*rule, &output);
+    }
 
-        if output.contains(&first) && output.contains(&second) {
-            let first_pos = output.iter().position(|x| *x == first).expect("") as usize;
-            let second_pos = output.iter().position(|x| *x == second).expect("") as usize;
+    return output;
+}
 
-            if first_pos > second_pos {
-                output.remove(first_pos);
-                output.insert(second_pos, first);
-            }
+fn apply_rule(rule: (i64, i64), page: &Vec<i64>) -> Vec<i64> {
+    let first = rule.0;
+    let second = rule.1;
+
+    let mut output = page.clone();
+
+    if output.contains(&first) && output.contains(&second) {
+        let first_pos = output.iter().position(|x| *x == first).expect("") as usize;
+        let second_pos = output.iter().position(|x| *x == second).expect("") as usize;
+
+        if first_pos > second_pos {
+            output.remove(first_pos);
+            output.insert(second_pos, first);
         }
     }
 
@@ -102,6 +84,10 @@ fn is_correct(page: &Vec<i64>, rules: &Rules) -> bool {
     return output;
 }
 
+fn sum_middle(pages: Pages) -> i64 {
+    return pages.iter().map(|page| page[page.len() / 2]).sum();
+}
+
 fn get_input() -> Input {
     let args: Vec<String> = env::args().collect();
     let input_path = format!("src/{}", &args[1]);
@@ -119,27 +105,19 @@ fn get_input() -> Input {
         if line == "" {
             still_rules = false;
         } else if still_rules {
-            let nums = line
-                .split("|")
-                .map(|x| x.parse::<i64>().expect(""))
-                .collect::<Vec<i64>>();
-
+            let nums = split_parse(line, "|".to_string());
             rules.push((nums[0], nums[1]));
         } else {
-            let nums = line
-                .split(",")
-                .map(|x| x.parse::<i64>().expect(""))
-                .collect::<Vec<i64>>();
-
-            pages.push(nums);
+            pages.push(split_parse(line, ",".to_string()));
         }
-        // let numbers = line
-        //     .split_whitespace()
-        //     .map(|x| x.parse::<i64>().expect("parse error"))
-        //     .collect::<Vec<i64>>();
-
-        // output.push(numbers);
     }
 
     return (rules, pages);
+}
+
+fn split_parse(line: String, what: String) -> Vec<i64> {
+    return line
+        .split(&what)
+        .map(|x| x.parse::<i64>().expect(""))
+        .collect::<Vec<i64>>();
 }
