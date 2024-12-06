@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     env::{self},
     fs::File,
     io::{BufRead, BufReader},
@@ -13,7 +14,7 @@ fn main() {
     println!("Part 2: {}", part_2(&input));
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Direction {
     Up,
     Down,
@@ -28,18 +29,15 @@ pub enum Next {
     Escape,
 }
 
-fn part_1(input: &Input) -> i64 {
+fn part_1(input: &Input) -> usize {
     return walk_map(input).expect("");
 }
 
 fn part_2(input: &Input) -> i64 {
     let mut output = 0;
 
-    let y_len = input.len();
-    let x_len = input[0].len();
-
-    for x in 0..x_len {
-        for y in 0..y_len {
+    for x in 0..input[0].len() {
+        for y in 0..input.len() {
             if will_loop(&(x, y), input) {
                 output += 1;
             }
@@ -47,6 +45,47 @@ fn part_2(input: &Input) -> i64 {
     }
 
     return output;
+}
+
+fn walk_map(input: &Input) -> Option<usize> {
+    let mut position: Position = starting_position(input);
+    let mut direction: Direction = starting_direction(position, input);
+
+    let mut positions_visited = HashSet::new();
+    let mut states_visited = HashSet::new();
+
+    loop {
+        if states_visited.contains(&(position, direction.clone())) {
+            return None;
+        }
+
+        positions_visited.insert(position);
+        states_visited.insert((position, direction.clone()));
+
+        match check_next(&position, &direction, input) {
+            Next::Empty => {
+                position = next_position(&position, &direction);
+            }
+            Next::Obstruction => {
+                direction = next_direction(&direction);
+            }
+            Next::Escape => {
+                break;
+            }
+        }
+    }
+
+    return Some(positions_visited.len());
+}
+
+fn starting_direction(position: Position, input: &Input) -> Direction {
+    match input[position.1][position.0] {
+        '^' => Direction::Up,
+        '>' => Direction::Right,
+        '<' => Direction::Left,
+        'v' => Direction::Down,
+        _ => Direction::Up,
+    }
 }
 
 fn will_loop(position: &Position, input: &Vec<Vec<char>>) -> bool {
@@ -64,51 +103,13 @@ fn will_loop(position: &Position, input: &Vec<Vec<char>>) -> bool {
     return false;
 }
 
-fn walk_map(input: &Input) -> Option<i64> {
-    let mut output: i64 = 1;
-    let mut steps: i64 = 1;
-    let mut position: Position = starting_position(input);
-    let mut direction: Direction = Direction::Up;
-    let y_len = input.len();
-    let x_len = input[0].len();
-    let mut current_map = input.clone();
-
-    loop {
-        if steps as usize > x_len * y_len * 4 {
-            return None;
-        }
-
-        current_map[position.1][position.0] = 'X';
-
-        match check_next(&position, &direction, &current_map) {
-            Next::Empty => {
-                steps += 1;
-                position = next_position(&position, &direction);
-
-                if current_map[position.1][position.0] == '.' {
-                    output += 1;
-                }
-            }
-            Next::Obstruction => {
-                direction = next_direction(&direction);
-            }
-            Next::Escape => {
-                break;
-            }
-        }
-    }
-
-    return Some(output);
-}
-
 fn starting_position(input: &Input) -> Position {
-    let y_len = input.len();
-    let x_len = input[0].len();
     let mut position = (0, 0);
+    let starting_chars = Vec::from(['v', '<', '>', '^']);
 
-    for y in 0..y_len {
-        for x in 0..x_len {
-            if input[y][x] == '^' {
+    for y in 0..input.len() {
+        for x in 0..input[0].len() {
+            if starting_chars.contains(&input[y][x]) {
                 position = (x, y);
             }
         }
