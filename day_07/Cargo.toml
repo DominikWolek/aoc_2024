@@ -4,5 +4,3 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# cached = "0.54"
-# itertools = "0.13"
