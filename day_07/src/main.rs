@@ -4,6 +4,15 @@ use std::{
     io::{BufRead, BufReader},
 };
 
+use itertools::Itertools;
+
+#[derive(Clone, Debug)]
+enum Op {
+    Add,
+    Mult,
+    Conc,
+}
+
 type Input = Vec<(i64, Vec<i64>)>;
 
 fn main() {
@@ -13,53 +22,54 @@ fn main() {
 }
 
 fn part_1(input: &Input) -> i64 {
-    return input
+    return sum_correct(input, &Vec::from([Op::Add, Op::Mult]));
+}
+
+fn part_2(input: &Input) -> i64 {
+    return sum_correct(input, &Vec::from([Op::Add, Op::Mult, Op::Conc]));
+}
+
+fn sum_correct(input: &Input, ops: &Vec<Op>) -> i64 {
+    input
         .iter()
-        .filter(|x| can_be_valid(x.0, &x.1))
+        .filter(|x| can_be_valid(x.0, &x.1, ops))
         .map(|x| x.0)
-        .sum();
+        .sum()
 }
 
-fn can_be_valid(result: i64, args: &Vec<i64>) -> bool {
+fn can_be_valid(result: i64, args: &Vec<i64>, allowed_ops: &Vec<Op>) -> bool {
     let mask_len = (args.len() - 1) as u32;
-    for i in 0..(2_i32.pow(mask_len)) {
-        let mask = get_mask(i, mask_len);
 
-        if apply_operators(args, mask.clone()) == result {
-            println!("{}: {:?} for {:?}", result, args, mask);
-            return true;
-        }
-    }
-
-    return false;
+    (0..mask_len)
+        .map(|_| allowed_ops.clone())
+        .multi_cartesian_product()
+        .filter(|mask| apply_operators(args, mask) == result)
+        .count()
+        > 0
 }
 
-fn apply_operators(args: &[i64], mask: Vec<bool>) -> i64 {
+fn apply_operators(args: &[i64], mask: &Vec<Op>) -> i64 {
     let mut cur = args[0];
     for i in 1..args.len() {
-        if mask[i - 1] {
-            cur = cur + args[i];
-        } else {
-            cur = cur * args[i];
+        match mask[i - 1] {
+            Op::Add => {
+                cur = cur + args[i];
+            }
+            Op::Mult => {
+                cur = cur * args[i];
+            }
+            Op::Conc => {
+                cur = concatenate(cur, args[i]);
+            }
         }
     }
     return cur;
 }
 
-fn get_mask(num: i32, mask_len: u32) -> Vec<bool> {
-    let mut out = Vec::new();
-    for i in 0..mask_len {
-        out.push(((num >> i) & 1) == 0);
-    }
-    return out;
-}
-
-fn part_2(input: &Input) -> i64 {
-    let mut output: i64 = 0;
-
-    // for i in input {}
-
-    return output;
+fn concatenate(cur: i64, i: i64) -> i64 {
+    return format!("{}{}", cur.to_string(), i.to_string())
+        .parse::<i64>()
+        .expect("");
 }
 
 fn get_input() -> Input {
