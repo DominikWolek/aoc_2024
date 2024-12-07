@@ -4,9 +4,10 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-use itertools::Itertools;
+// use cached::proc_macro::cached;
+// use itertools::Itertools;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum Op {
     Add,
     Mult,
@@ -30,46 +31,49 @@ fn part_2(input: &Input) -> i64 {
 }
 
 fn sum_correct(input: &Input, ops: &Vec<Op>) -> i64 {
-    input
+    return input
         .iter()
-        .filter(|x| can_be_valid(x.0, &x.1, ops))
+        .filter(|x| {
+            let mut reversed = x.1.clone();
+            reversed.reverse();
+            can_be_valid(x.0, &reversed, 0, ops)
+        })
         .map(|x| x.0)
-        .sum()
+        .sum();
 }
 
-fn can_be_valid(result: i64, args: &Vec<i64>, allowed_ops: &Vec<Op>) -> bool {
-    let mask_len = (args.len() - 1) as u32;
-
-    (0..mask_len)
-        .map(|_| allowed_ops.clone())
-        .multi_cartesian_product()
-        .filter(|mask| apply_operators(args, mask) == result)
-        .count()
-        > 0
-}
-
-fn apply_operators(args: &[i64], mask: &Vec<Op>) -> i64 {
-    let mut cur = args[0];
-    for i in 1..args.len() {
-        match mask[i - 1] {
-            Op::Add => {
-                cur = cur + args[i];
-            }
-            Op::Mult => {
-                cur = cur * args[i];
-            }
-            Op::Conc => {
-                cur = concatenate(cur, args[i]);
-            }
-        }
+fn can_be_valid(result: i64, args: &Vec<i64>, i: usize, allowed_ops: &Vec<Op>) -> bool {
+    if i == args.len() - 1 {
+        return args[i] == result;
+    } else {
+        return allowed_ops
+            .iter()
+            .any(|op| match reverse_op(result, args[i], op) {
+                Some(result) => can_be_valid(result, args, i + 1, allowed_ops),
+                None => false,
+            });
     }
-    return cur;
 }
 
-fn concatenate(cur: i64, i: i64) -> i64 {
-    return format!("{}{}", cur.to_string(), i.to_string())
-        .parse::<i64>()
-        .expect("");
+fn reverse_op(x: i64, y: i64, op: &Op) -> Option<i64> {
+    match op {
+        Op::Add => Some(x - y),
+        Op::Mult => (x % y == 0).then(|| x / y),
+        Op::Conc => reverse_concat(y, x),
+    }
+}
+
+fn reverse_concat(y: i64, x: i64) -> Option<i64> {
+    let y_len = f64::log(y as f64 + 0.1, 10.0).ceil() as u32;
+    let pow_10 = 10_i64.pow(y_len);
+    let x_pref = x / 10_i64.pow(y_len);
+    let x_suff = x - x_pref * pow_10;
+
+    if x_suff == y {
+        return Some(x_pref);
+    } else {
+        return None;
+    };
 }
 
 fn get_input() -> Input {
