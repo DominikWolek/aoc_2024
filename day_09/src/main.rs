@@ -2,18 +2,19 @@ use std::{
     env::{self},
     fs::File,
     io::{BufRead, BufReader},
-    process::Output,
 };
 
-type Input = Vec<i16>;
-type DiscMap = Vec<i16>;
+type Base = isize;
+type Input = Vec<Base>;
+type DiscMap = Vec<Base>;
+type DiscFiles = Vec<(usize, Base)>;
 
-const EMPTY: i16 = -1;
+const EMPTY: Base = -1;
 
 fn main() {
     let input = get_input();
     println!("Part 1: {}", part_1(&input));
-    // println!("Part 2: {}", part_2(&input));
+    println!("Part 2: {}", part_2(&input));
 }
 
 fn part_1(input: &Input) -> usize {
@@ -48,29 +49,98 @@ fn part_1(input: &Input) -> usize {
         } else {
             break;
         }
-        println!("free {} take {} len {}", free, take, len);
     }
 
     return calc_checksum(&disc_map);
 }
 
-fn calc_checksum(disc_map: &DiscMap) -> usize {
-    for i in disc_map.clone() {
-        print!("{}", i);
-    }
-    println!();
+fn part_2(input: &Input) -> usize {
+    let mut disc_files: DiscFiles = get_disc_files(input);
 
-    let mut curr_ID = 0;
-    let mut output = 0;
+    let mut take_val: isize = disc_files.last().expect("").1;
+    let mut take_in = disc_files.len() - 1 as usize;
+
+    while take_val >= 0 {
+        loop {
+            if disc_files[take_in].1 == take_val {
+                break;
+            } else {
+                take_in -= 1;
+            }
+        }
+
+        let take_size = disc_files[take_in].0;
+        if take_val != EMPTY {
+            for free in 0..take_in {
+                let free_val = disc_files[free].1;
+                let free_size = disc_files[free].0;
+                if free_val == EMPTY && free_size >= take_size {
+                    if free_size == take_size {
+                        disc_files[free].1 = take_val;
+                        disc_files[take_in].1 = EMPTY;
+                    } else {
+                        disc_files.remove(free);
+                        disc_files.insert(free, (take_size, take_val));
+                        disc_files.insert(free + 1, (free_size - take_size, EMPTY));
+                        disc_files[take_in + 1].1 = EMPTY;
+
+                        take_in += 1;
+                    }
+                    break;
+                }
+            }
+        }
+        take_val -= 1;
+    }
+
+    return calc_files_checksum(&disc_files);
+}
+
+fn calc_files_checksum(disc_files: &[(usize, isize)]) -> usize {
+    let x = disc_files
+        .iter()
+        .map(|(size, val)| {
+            let mut x = Vec::new();
+            for _ in 0..*size {
+                if *val == EMPTY {
+                    x.push(0);
+                } else {
+                    x.push(*val);
+                }
+            }
+            return x;
+        })
+        .flatten()
+        .collect();
+
+    return calc_checksum(&x);
+}
+
+fn get_disc_files(input: &Input) -> DiscFiles {
+    let mut output = DiscFiles::new();
+    let mut ids = true;
+    let mut current_id: Base = 0;
+
+    for curr_len in input {
+        if ids {
+            output.push((*curr_len as usize, current_id));
+            current_id += 1;
+        } else {
+            output.push((*curr_len as usize, EMPTY));
+        }
+        ids = !ids;
+    }
+    return output;
+}
+
+fn calc_checksum(disc_map: &DiscMap) -> usize {
+    let mut curr_id = 0;
+    let mut output: usize = 0;
 
     for i in disc_map {
         if *i != EMPTY {
-            let num: usize = format!("{}", i).parse().expect("");
-
-            output += num * curr_ID;
-            curr_ID += 1;
-
-            println!("{}", output);
+            output += *i as usize * curr_id as usize;
+            curr_id += 1;
         } else {
             break;
         }
@@ -79,17 +149,17 @@ fn calc_checksum(disc_map: &DiscMap) -> usize {
     return output;
 }
 
-fn get_map(input: &[i16]) -> DiscMap {
+fn get_map(input: &[Base]) -> DiscMap {
     let mut output = DiscMap::new();
     let mut ids = true;
-    let mut current_ID = 0;
+    let mut current_id = 0;
 
     for i in input {
         if ids {
             for _ in 0..*i {
-                output.push(current_ID);
+                output.push(current_id);
             }
-            current_ID += 1;
+            current_id += 1;
         } else {
             for _ in 0..*i {
                 output.push(EMPTY);
@@ -98,14 +168,6 @@ fn get_map(input: &[i16]) -> DiscMap {
         ids = !ids;
     }
     return output;
-}
-
-fn part_2(input: &Input) -> usize {
-    let mut output: i64 = 0;
-
-    // for i in input {}
-
-    return output as usize;
 }
 
 fn get_input() -> Input {
@@ -120,8 +182,8 @@ fn get_input() -> Input {
         let line = line_res.expect("");
         let numbers = line
             .chars()
-            .map(|x| format!("{}", x).parse::<i16>().expect(""))
-            .collect::<Vec<i16>>();
+            .map(|x| format!("{}", x).parse::<Base>().expect(""))
+            .collect::<DiscMap>();
 
         output.push(numbers);
     }
