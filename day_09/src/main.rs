@@ -2,30 +2,110 @@ use std::{
     env::{self},
     fs::File,
     io::{BufRead, BufReader},
+    process::Output,
 };
 
-type Input = Vec<Vec<i64>>;
+type Input = Vec<i16>;
+type DiscMap = Vec<i16>;
+
+const EMPTY: i16 = -1;
 
 fn main() {
     let input = get_input();
     println!("Part 1: {}", part_1(&input));
-    println!("Part 2: {}", part_2(&input));
+    // println!("Part 2: {}", part_2(&input));
 }
 
-fn part_1(input: &Input) -> i64 {
-    let mut output: i64 = 0;
+fn part_1(input: &Input) -> usize {
+    let mut disc_map: DiscMap = get_map(input);
 
-    for i in input {}
+    let len = disc_map.len();
+    let mut free = 0;
+
+    let mut take = len - 1;
+
+    loop {
+        for i in 0..len {
+            if disc_map[i] == EMPTY {
+                free = i;
+                break;
+            }
+        }
+
+        let mut reversed: Vec<usize> = (0..len).collect();
+        reversed.reverse();
+
+        for i in reversed {
+            if disc_map[i] != EMPTY {
+                take = i;
+                break;
+            }
+        }
+
+        if free < take {
+            disc_map[free] = disc_map[take];
+            disc_map[take] = EMPTY;
+        } else {
+            break;
+        }
+        println!("free {} take {} len {}", free, take, len);
+    }
+
+    return calc_checksum(&disc_map);
+}
+
+fn calc_checksum(disc_map: &DiscMap) -> usize {
+    for i in disc_map.clone() {
+        print!("{}", i);
+    }
+    println!();
+
+    let mut curr_ID = 0;
+    let mut output = 0;
+
+    for i in disc_map {
+        if *i != EMPTY {
+            let num: usize = format!("{}", i).parse().expect("");
+
+            output += num * curr_ID;
+            curr_ID += 1;
+
+            println!("{}", output);
+        } else {
+            break;
+        }
+    }
 
     return output;
 }
 
-fn part_2(input: &Input) -> i64 {
+fn get_map(input: &[i16]) -> DiscMap {
+    let mut output = DiscMap::new();
+    let mut ids = true;
+    let mut current_ID = 0;
+
+    for i in input {
+        if ids {
+            for _ in 0..*i {
+                output.push(current_ID);
+            }
+            current_ID += 1;
+        } else {
+            for _ in 0..*i {
+                output.push(EMPTY);
+            }
+        }
+        ids = !ids;
+    }
+    return output;
+}
+
+fn part_2(input: &Input) -> usize {
     let mut output: i64 = 0;
 
-    for i in input {}
+    // for i in input {}
 
-    return output;
+    return output as usize;
 }
 
 fn get_input() -> Input {
@@ -39,12 +119,14 @@ fn get_input() -> Input {
     for line_res in lines {
         let line = line_res.expect("");
         let numbers = line
-            .split_whitespace()
-            .map(|x| x.parse::<i64>().expect("parse error"))
-            .collect::<Vec<i64>>();
+            .chars()
+            .map(|x| format!("{}", x).parse::<i16>().expect(""))
+            .collect::<Vec<i16>>();
 
         output.push(numbers);
     }
+
+    let output = output[0].clone();
 
     return output;
 }
