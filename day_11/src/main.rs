@@ -52,14 +52,14 @@ fn do_step(curr: usize, gen_cnt: i32, results: &mut MemResults) -> usize {
     match results.get(&(curr, gen_cnt)) {
         Some(prev_result) => return *prev_result,
         None => {
-            let gen_cnt = gen_cnt - 1;
+            let new_cnt = gen_cnt - 1;
             if curr == 0 {
-                result = do_step(1, gen_cnt, results);
+                result = do_step(1, new_cnt, results);
             } else if val_len(curr) % 2 == 0 {
                 let (val_1, val_2) = split_into_halfs(curr);
-                result = do_step(val_1, gen_cnt, results) + do_step(val_2, gen_cnt, results);
+                result = do_step(val_1, new_cnt, results) + do_step(val_2, new_cnt, results);
             } else {
-                result = do_step(curr * 2024, gen_cnt, results)
+                result = do_step(curr * 2024, new_cnt, results)
             }
             results.insert((curr, gen_cnt), result);
             return result;
