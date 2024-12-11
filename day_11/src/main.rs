@@ -5,6 +5,8 @@ use std::{
     io::{BufRead, BufReader},
 };
 
+use rayon::iter::*;
+
 type Input = Vec<usize>;
 type MemResults = HashMap<(usize, i32), usize>;
 
@@ -23,7 +25,7 @@ fn part_2(input: &mut Input) -> usize {
 }
 
 fn val_len(val: usize) -> u32 {
-    f64::log(val as f64 + 0.1, 10.0).ceil() as u32
+    val.ilog10() + 1
 }
 
 fn split_into_halfs(val: usize) -> (usize, usize) {
@@ -38,7 +40,7 @@ fn split_into_halfs(val: usize) -> (usize, usize) {
 
 fn stones_cnt(input: &mut Vec<usize>, start_gen_cnt: i32) -> usize {
     input
-        .iter()
+        .par_iter()
         .map(|x| do_step(*x, start_gen_cnt, &mut HashMap::new()))
         .sum()
 }
