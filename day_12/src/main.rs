@@ -41,27 +41,15 @@ fn part_2(input: &Input) -> usize {
     let values: HashSet<i64> = regions.values().map(|x| *x).collect();
 
     for key in values {
-        // let sides_cnt_ = sides_cnt(key, &regions, input);
-        let better_sides_cnt_ = sides_cnt(key, &regions, input);
+        let better_sides_cnt_ = sides_cnt(key, &regions);
         let area_ = area(key, &regions);
-        let (pos, _xx) = regions
-            .iter()
-            .filter(|(_pos, keyy)| **keyy == key)
-            .max()
-            .expect("");
 
         let sides_cnt_ = better_sides_cnt_;
-        // let character: char = input[pos.1 as usize][pos.0 as usize];
-        // println!("{character}({key}): area {area_} * {better_sides_cnt_} sides\n");
         output += area_ * sides_cnt_;
 
-        match is_enclave(key, &regions) {
-            Some(outer_key) => {
-                let outer_area_ = area(outer_key, &regions);
-                // println!("It's enclave of {outer_key} with outer area of {outer_area_}");
-                output += outer_area_ * sides_cnt_;
-            }
-            None => {}
+        if let Some(outer_key) = is_enclave(key, &regions) {
+            let outer_area_ = area(outer_key, &regions);
+            output += outer_area_ * sides_cnt_;
         }
     }
 
@@ -77,24 +65,20 @@ fn is_enclave(key: i64, regions: &RegionMap) -> Option<i64> {
             all_neighbours(pos).iter().map(|x| regions.get(x)).collect();
 
         for x in nb_regions {
-            match x {
-                Some(nb_key) => {
-                    if *nb_key == key {
-                        continue;
-                    } else {
-                        match neighbour {
-                            Some(old_nb_key) => {
-                                if old_nb_key != *nb_key {
-                                    return None;
-                                }
-                            }
-                            None => neighbour = Some(*nb_key),
+            if let Some(nb_key) = x {
+                if *nb_key == key {
+                    continue;
+                } else {
+                    if let Some(old_nb_key) = neighbour {
+                        if old_nb_key != *nb_key {
+                            return None;
                         }
+                    } else {
+                        neighbour = Some(*nb_key)
                     }
                 }
-                None => {
-                    return None;
-                }
+            } else {
+                return None;
             }
         }
     }
@@ -110,7 +94,7 @@ fn perimeter(key: i64, regions: &RegionMap, input: &Input) -> usize {
     outer_sides(regions, key, input).len()
 }
 
-fn sides_cnt(key: i64, regions: &RegionMap, input: &Input) -> usize {
+fn sides_cnt(key: i64, regions: &RegionMap) -> usize {
     let mut positions = get_positions_by_key(regions, key);
     positions.sort();
 
@@ -121,8 +105,6 @@ fn sides_cnt(key: i64, regions: &RegionMap, input: &Input) -> usize {
     let mut curr_dir = Dir::Up;
 
     loop {
-        // println!("[{turns}] {:?} {:?}", curr_pos, curr_dir);
-
         let next_pos_ = next_pos(curr_pos, &curr_dir);
         let to_right = next_dir(&curr_dir);
         let to_back = opossite_dir(&curr_dir);
@@ -152,76 +134,10 @@ fn sides_cnt(key: i64, regions: &RegionMap, input: &Input) -> usize {
             }
         }
         if curr_pos == start_pos && (curr_dir == Dir::Up || curr_dir == Dir::Right) {
-            // println!("ended with {:?} and [{turns}]", curr_dir);
             return turns - (turns % 2);
         }
     }
 }
-
-// fn sides_cnt(key: i64, regions: &RegionMap, input: &Input) -> usize {
-//     let mut positions = get_positions_by_key(regions, key);
-//     positions.sort();
-
-//     let start_pos = positions[0];
-//     println!(
-//         "CHARACTER: {:?}",
-//         input[start_pos.1 as usize][start_pos.0 as usize]
-//     );
-//     let mut cur_pos = start_pos.clone();
-//     cur_pos = (cur_pos.0 - 1, cur_pos.1);
-//     return get_sides_maps(
-//         cur_pos,
-//         Dir::Up,
-//         cur_pos,
-//         positions,
-//         0, // &mut (&mut x_sides, &mut y_sides),
-//     );
-// }
-
-// fn get_sides_maps(
-//     pos: Position,
-//     dir: Dir,
-//     start_pos: Position,
-//     positions: Vec<Position>,
-//     output: usize, // sides: &mut (&mut SidesMap, &mut SidesMap),
-// ) -> usize {
-//     println!("[{output}]{:?} going {:?}", pos, dir);
-//     let mut next_d = dir.clone();
-//     let mut next_p = next_pos(pos, &dir);
-//     let inside_on_right = next_pos(pos, &next_dir(&dir));
-//     let mut next_output = output;
-
-//     if !positions.contains(&inside_on_right) {
-//         println!("TURN, THEN AHEAD");
-//         next_d = next_dir(&dir);
-//         next_p = next_pos(pos, &next_d);
-//         next_output += 1;
-//     } else if positions.contains(&next_p) {
-//         println!("TURN");
-//         let d_next = next_dir(&dir);
-//         let d_escape = next_dir(&d_next);
-//         let d_next_opposite = next_dir(&d_escape);
-
-//         if !positions.contains(&next_pos(pos, &d_next)) {
-//             next_d = d_next;
-//             next_output += 1;
-//         } else if !positions.contains(&next_pos(pos, &d_next_opposite)) {
-//             next_d = d_next_opposite;
-//             next_output += 1;
-//         } else {
-//             next_d = d_escape;
-//             next_output += 2;
-//             //escape
-//         }
-//         next_p = pos;
-//     }
-
-//     if next_p == start_pos {
-//         println!("THE END");
-//         return next_output;
-//     }
-//     return get_sides_maps(next_p, next_d, start_pos, positions, next_output);
-// }
 
 fn next_dir(dir: &Dir) -> Dir {
     match dir {
