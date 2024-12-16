@@ -1,5 +1,5 @@
 use std::{
-    collections::{hash_map, HashMap},
+    collections::HashMap,
     env::{self},
     fs::File,
     i32,
@@ -43,6 +43,7 @@ fn part_2(input: &mut Input) -> i64 {
             robot.travel();
         }
         if check_map(&input) {
+            print_map(&input);
             return i;
         }
     }
@@ -73,8 +74,24 @@ fn check_map(robots: &Input) -> bool {
     return false;
 }
 
-// fn pari
+fn print_map(robots: &Input) {
+    let mut hash_map = HashMap::new();
 
+    for robot in robots {
+        let cur_val = hash_map.get(&robot.position).unwrap_or(&0);
+        hash_map.insert(robot.position, cur_val + 1);
+    }
+
+    for y in 0..SPACE_HEIGHT {
+        for x in 0..SPACE_WIDTH {
+            match hash_map.get(&(x, y)) {
+                Some(num) => print!("{num}"),
+                None => print!("."),
+            }
+        }
+        println!();
+    }
+}
 fn safety_factor(robots: &Input) -> i32 {
     let mut q_1 = 0;
     let mut q_2 = 0;
