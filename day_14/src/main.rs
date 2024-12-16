@@ -24,8 +24,8 @@ const SPACE_HEIGHT: i32 = 103;
 
 fn main() {
     let mut input = get_input();
-    println!("Part 1: {}", part_1(&mut input));
-    //     println!("Part 2: {}", part_2(&input));
+    println!("Part 1: {}", part_1(&mut input.clone()));
+    println!("Part 2: {}", part_2(&mut input));
 }
 
 fn part_1(input: &mut Input) -> i32 {
@@ -35,7 +35,20 @@ fn part_1(input: &mut Input) -> i32 {
     return safety_factor(input);
 }
 
-fn print_map(robots: &Input) {
+fn part_2(input: &mut Input) -> i64 {
+    let mut i = 0;
+    loop {
+        i += 1;
+        for robot in &mut *input {
+            robot.travel();
+        }
+        if check_map(&input) {
+            return i;
+        }
+    }
+}
+
+fn check_map(robots: &Input) -> bool {
     let mut hash_map = HashMap::new();
 
     for robot in robots {
@@ -44,15 +57,23 @@ fn print_map(robots: &Input) {
     }
 
     for y in 0..SPACE_HEIGHT {
+        let mut cnt = 0;
         for x in 0..SPACE_WIDTH {
             match hash_map.get(&(x, y)) {
-                Some(num) => print!("{num}"),
-                None => print!("."),
+                Some(_) => {
+                    cnt += 1;
+                    if cnt >= 10 {
+                        return true;
+                    }
+                }
+                None => cnt = 0,
             }
         }
-        println!();
     }
+    return false;
 }
+
+// fn pari
 
 fn safety_factor(robots: &Input) -> i32 {
     let mut q_1 = 0;
@@ -75,11 +96,6 @@ fn safety_factor(robots: &Input) -> i32 {
             q_4 += 1;
         }
     }
-
-    dbg!(q_1);
-    dbg!(q_2);
-    dbg!(q_3);
-    dbg!(q_4);
 
     return q_1 * q_2 * q_3 * q_4;
 }
