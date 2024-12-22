@@ -19,6 +19,7 @@ fn main() {
 
 const GENERATIONS_CNT: usize = 2000;
 const PRUNE_BASE: usize = 16_777_216;
+const CHANGE_RANGE: std::ops::RangeInclusive<i8> = -9..=9;
 
 fn part_1(input: &Input) -> usize {
     input
@@ -34,17 +35,15 @@ fn part_2(input: &Input) -> usize {
         .collect::<Vec<_>>();
 
     let mut max = 0;
-    for ch_1 in -9..=9 {
-        for ch_2 in -9..=9 {
-            println!("{ch_1} {ch_2}");
-            for ch_3 in -9..=9 {
-                for ch_4 in -9..=9 {
+    for ch_1 in CHANGE_RANGE {
+        for ch_2 in CHANGE_RANGE {
+            for ch_3 in CHANGE_RANGE {
+                for ch_4 in CHANGE_RANGE {
                     let change_seq: ChangeSeq = (ch_1, ch_2, ch_3, ch_4);
 
-                    let result = total_bananas(&changes_maps, change_seq);
+                    let result = bananas(&changes_maps, change_seq);
 
                     if result > max {
-                        println!("[{result}]: {:?}", change_seq);
                         max = result;
                     }
                 }
@@ -55,7 +54,7 @@ fn part_2(input: &Input) -> usize {
     return max;
 }
 
-fn total_bananas(changes_maps: &Vec<HashMap<ChangeSeq, Price>>, change_seq: ChangeSeq) -> usize {
+fn bananas(changes_maps: &Vec<HashMap<ChangeSeq, Price>>, change_seq: ChangeSeq) -> usize {
     let seq_sum = change_seq.0 + change_seq.1 + change_seq.2 + change_seq.3;
     if seq_sum >= -18 && seq_sum <= 18 {
         changes_maps
@@ -77,7 +76,8 @@ fn changes_map(initial: usize) -> HashMap<ChangeSeq, Price> {
     let changes = changes(&prices);
     zip(changes, &prices[4..])
         .map(|(x, y)| (x, *y))
-        .collect::<HashMap<_, _>>()
+        .rev()
+        .collect()
 }
 
 fn changes(prices: &Vec<Price>) -> Vec<ChangeSeq> {
