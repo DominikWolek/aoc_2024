@@ -1,10 +1,15 @@
 use std::{
+    collections::HashMap,
     env::{self},
     fs::File,
     io::{BufRead, BufReader},
+    iter::zip,
 };
 
 type Input = Vec<usize>;
+type Price = u8;
+type Change = i8;
+type ChangeSeq = (Change, Change, Change, Change);
 
 fn main() {
     let input = get_input();
@@ -22,12 +27,77 @@ fn part_1(input: &Input) -> usize {
         .sum()
 }
 
-fn part_2(input: &Input) -> i64 {
-    let mut output: i64 = 0;
+fn part_2(input: &Input) -> usize {
+    let changes_maps = input
+        .iter()
+        .map(|initial| changes_map(*initial))
+        .collect::<Vec<_>>();
 
-    for i in input {}
+    let mut max = 0;
+    for ch_1 in -9..=9 {
+        for ch_2 in -9..=9 {
+            println!("{ch_1} {ch_2}");
+            for ch_3 in -9..=9 {
+                for ch_4 in -9..=9 {
+                    let change_seq: ChangeSeq = (ch_1, ch_2, ch_3, ch_4);
 
-    return output;
+                    let result = changes_maps
+                        .iter()
+                        .map(|mapa| mapa.get(&change_seq).unwrap_or(&0))
+                        .map(|x| *x as usize)
+                        .sum();
+
+                    if result > max {
+                        println!("[{result}]: {:?}", change_seq);
+                        max = result;
+                    }
+                }
+            }
+        }
+    }
+
+    return max;
+}
+
+fn changes_map(initial: usize) -> HashMap<ChangeSeq, Price> {
+    let prices = secrets(initial)
+        .iter()
+        .map(|secret| (secret % 10) as Price)
+        .collect::<Vec<_>>();
+
+    let changes = changes(&prices);
+    zip(changes, &prices[4..])
+        .map(|(x, y)| (x, *y))
+        .collect::<HashMap<_, _>>()
+}
+
+fn changes(prices: &Vec<Price>) -> Vec<ChangeSeq> {
+    let (mut ch_1, mut ch_2, mut ch_3, mut ch_4): ChangeSeq = (0, 0, 0, 0);
+
+    let mut out = vec![];
+    for i in 1..prices.len() {
+        ch_1 = ch_2;
+        ch_2 = ch_3;
+        ch_3 = ch_4;
+        ch_4 = prices[i] as Change - prices[i - 1] as Change;
+
+        if i >= 4 {
+            out.push((ch_1, ch_2, ch_3, ch_4));
+        }
+    }
+
+    return out;
+}
+
+fn secrets(initial: usize) -> Vec<usize> {
+    let mut out = vec![];
+
+    let mut current = initial;
+    for _ in 0..2000 {
+        out.push(current);
+        current = calc_secret(current, 1);
+    }
+    out
 }
 
 fn calc_secret(secret: usize, generations_cnt: usize) -> usize {
@@ -40,7 +110,7 @@ fn calc_secret(secret: usize, generations_cnt: usize) -> usize {
         current = mix(current >> 5, current);
         current = prune(current);
 
-        current = mix((current * 2048), current);
+        current = mix(current * 2048, current);
         current = prune(current);
 
         return calc_secret(current, generations_cnt - 1);
