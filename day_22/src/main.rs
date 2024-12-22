@@ -41,11 +41,7 @@ fn part_2(input: &Input) -> usize {
                 for ch_4 in -9..=9 {
                     let change_seq: ChangeSeq = (ch_1, ch_2, ch_3, ch_4);
 
-                    let result = changes_maps
-                        .iter()
-                        .map(|mapa| mapa.get(&change_seq).unwrap_or(&0))
-                        .map(|x| *x as usize)
-                        .sum();
+                    let result = total_bananas(&changes_maps, change_seq);
 
                     if result > max {
                         println!("[{result}]: {:?}", change_seq);
@@ -57,6 +53,19 @@ fn part_2(input: &Input) -> usize {
     }
 
     return max;
+}
+
+fn total_bananas(changes_maps: &Vec<HashMap<ChangeSeq, Price>>, change_seq: ChangeSeq) -> usize {
+    let seq_sum = change_seq.0 + change_seq.1 + change_seq.2 + change_seq.3;
+    if seq_sum >= -18 && seq_sum <= 18 {
+        changes_maps
+            .iter()
+            .map(|mapa| mapa.get(&change_seq).unwrap_or(&0))
+            .map(|x| *x as usize)
+            .sum()
+    } else {
+        0
+    }
 }
 
 fn changes_map(initial: usize) -> HashMap<ChangeSeq, Price> {
@@ -104,25 +113,12 @@ fn calc_secret(secret: usize, generations_cnt: usize) -> usize {
     if generations_cnt == 0 {
         return secret;
     } else {
-        let mut current = mix(secret << 6, secret);
-        current = prune(current);
-
-        current = mix(current >> 5, current);
-        current = prune(current);
-
-        current = mix(current * 2048, current);
-        current = prune(current);
+        let mut current = ((secret << 6) ^ secret) % PRUNE_BASE;
+        current = ((current >> 5) ^ current) % PRUNE_BASE;
+        current = ((current * 2048) ^ current) % PRUNE_BASE;
 
         return calc_secret(current, generations_cnt - 1);
     }
-}
-
-fn mix(left: usize, right: usize) -> usize {
-    left ^ right
-}
-
-fn prune(current: usize) -> usize {
-    current % PRUNE_BASE
 }
 
 fn get_input() -> Input {
