@@ -56,7 +56,7 @@ fn part_2(input: &Input) -> usize {
 
 fn bananas(changes_maps: &Vec<HashMap<ChangeSeq, Price>>, change_seq: ChangeSeq) -> usize {
     let seq_sum = change_seq.0 + change_seq.1 + change_seq.2 + change_seq.3;
-    if seq_sum >= -18 && seq_sum <= 18 {
+    if CHANGE_RANGE.contains(&seq_sum) {
         changes_maps
             .iter()
             .map(|mapa| mapa.get(&change_seq).unwrap_or(&0))
