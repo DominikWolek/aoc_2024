@@ -27,6 +27,49 @@ fn part_1(input: &Input) -> usize {
         .count()
 }
 
+fn part_2(input: &Input) -> String {
+    let connections = connections(input);
+
+    let large_set = connections
+        .keys()
+        .map(|init| largest(init, &connections))
+        .max_by(|left, right| usize::cmp(&left.len(), &right.len()))
+        .unwrap();
+
+    let mut password = large_set.iter().map(|x| x.clone()).collect::<Vec<String>>();
+    password.sort();
+    // .join(",");
+
+    return password.join(",");
+}
+
+fn largest(init: &String, connections: &HashMap<String, HashSet<String>>) -> HashSet<Computer> {
+    let mut set = HashSet::new();
+    set.insert(init.clone());
+
+    let empty = HashSet::new();
+    let mut queue = connections
+        .get(init)
+        .unwrap_or(&empty)
+        .iter()
+        .collect::<Vec<_>>();
+
+    while !queue.is_empty() {
+        let curr = queue.pop().unwrap();
+        let connected = connections.get(curr).unwrap();
+
+        if set.iter().all(|computer| connected.contains(computer)) {
+            set.insert(curr.clone());
+
+            for connected in connected {
+                queue.push(connected);
+            }
+        }
+    }
+
+    return set;
+}
+
 fn initial(string: &String) -> bool {
     string.chars().nth(0) == Some(HISTORIAN_INITIAL)
 }
@@ -65,14 +108,6 @@ fn add_connection(mapa: &mut HashMap<Computer, HashSet<Computer>>, left: String,
     let mut curr = mapa.get(&left).unwrap_or(&HashSet::new()).clone();
     curr.insert(right);
     mapa.insert(left, curr);
-}
-
-fn part_2(input: &Input) -> i64 {
-    let mut output: i64 = 0;
-
-    for i in input {}
-
-    return output;
 }
 
 fn get_input() -> Input {
